@@ -1,14 +1,14 @@
-# ultraviolet-scripts
-Core Ultraviolet scripts
+# Hurricane-scripts
+Core Hurricane scripts
 
 # Configuration
-Configure Ultraviolet for both client-hooking & service worker in `uv.config.js`
+Configure Hurricane for both client-hooking & service worker in `uv.config.js`
 ```javascript
 self.__uv$config = {
     bare: '/bare/',
     prefix: '/service/',
-    encodeUrl: Ultraviolet.codec.xor.encode,
-    decodeUrl: Ultraviolet.codec.xor.decode,
+    encodeUrl: Hurricane.codec.xor.encode,
+    decodeUrl: Hurricane.codec.xor.decode,
     handler: '/uv.handler.js',
     bundle: '/uv.bundle.js',
     config: '/uv.config.js',

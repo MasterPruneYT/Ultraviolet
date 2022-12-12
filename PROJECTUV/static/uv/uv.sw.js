@@ -44,7 +44,7 @@ class UVServiceWorker extends EventEmitter {
             ],
         };  
         this.config = config;
-        this.browser = Ultraviolet.Bowser.getParser(self.navigator.userAgent).getBrowserName();
+        this.browser = Hurricane.Bowser.getParser(self.navigator.userAgent).getBrowserName();
 
         if (this.browser === 'Firefox') {
             this.headers.forward.push('user-agent');
@@ -57,41 +57,41 @@ class UVServiceWorker extends EventEmitter {
         };
         try {
 
-            const ultraviolet = new Ultraviolet(this.config);
+            const Hurricane = new Hurricane(this.config);
 
             if (typeof this.config.construct === 'function') {
-                this.config.construct(ultraviolet, 'service');
+                this.config.construct(Hurricane, 'service');
             };
 
-            const db = await ultraviolet.cookie.db();
+            const db = await Hurricane.cookie.db();
 
-            ultraviolet.meta.origin = location.origin;
-            ultraviolet.meta.base = ultraviolet.meta.url = new URL(ultraviolet.sourceUrl(request.url));
+            Hurricane.meta.origin = location.origin;
+            Hurricane.meta.base = Hurricane.meta.url = new URL(Hurricane.sourceUrl(request.url));
 
             const requestCtx = new RequestContext(
                 request, 
                 this, 
-                ultraviolet, 
+                Hurricane, 
                 !this.method.empty.includes(request.method.toUpperCase()) ? await request.blob() : null
             );
 
-            if (ultraviolet.meta.url.protocol === 'blob:') {
+            if (Hurricane.meta.url.protocol === 'blob:') {
                 requestCtx.blob = true;
                 requestCtx.base = requestCtx.url = new URL(requestCtx.url.pathname);
             };
 
             if (request.referrer && request.referrer.startsWith(location.origin)) {
-                const referer = new URL(ultraviolet.sourceUrl(request.referrer));
+                const referer = new URL(Hurricane.sourceUrl(request.referrer));
 
-                if (requestCtx.headers.origin || ultraviolet.meta.url.origin !== referer.origin && request.mode === 'cors') {
+                if (requestCtx.headers.origin || Hurricane.meta.url.origin !== referer.origin && request.mode === 'cors') {
                     requestCtx.headers.origin = referer.origin;
                 };
 
                 requestCtx.headers.referer = referer.href;
             };
 
-            const cookies = await ultraviolet.cookie.getCookies(db) || [];
-            const cookieStr = ultraviolet.cookie.serialize(cookies, ultraviolet.meta, false);
+            const cookies = await Hurricane.cookie.getCookies(db) || [];
+            const cookieStr = Hurricane.cookie.serialize(cookies, Hurricane.meta, false);
 
             if (this.browser === 'Firefox' && !(request.destination === 'iframe' || request.destination === 'document')) {
                 requestCtx.forward.shift();
@@ -123,16 +123,16 @@ class UVServiceWorker extends EventEmitter {
             }; 
             
             if (responseCtx.headers.location) {
-                responseCtx.headers.location = ultraviolet.rewriteUrl(responseCtx.headers.location);
+                responseCtx.headers.location = Hurricane.rewriteUrl(responseCtx.headers.location);
             };
 
             if (responseCtx.headers['set-cookie']) {
-                Promise.resolve(ultraviolet.cookie.setCookies(responseCtx.headers['set-cookie'], db, ultraviolet.meta)).then(() => {
+                Promise.resolve(Hurricane.cookie.setCookies(responseCtx.headers['set-cookie'], db, Hurricane.meta)).then(() => {
                     self.clients.matchAll().then(function (clients){
                         clients.forEach(function(client){
                             client.postMessage({
                                 msg: 'updateCookies',
-                                url: ultraviolet.meta.url.href,
+                                url: Hurricane.meta.url.href,
                             });
                         });
                     });
@@ -145,27 +145,27 @@ class UVServiceWorker extends EventEmitter {
                     case 'script':
                     case 'worker':
                         responseCtx.body = `if (!self.__uv && self.importScripts) importScripts('${__uv$config.bundle}', '${__uv$config.config}', '${__uv$config.handler}');\n`;
-                        responseCtx.body += ultraviolet.js.rewrite(
+                        responseCtx.body += Hurricane.js.rewrite(
                             await response.text()
                         );
                         break;
                     case 'style':
-                        responseCtx.body = ultraviolet.rewriteCSS(
+                        responseCtx.body = Hurricane.rewriteCSS(
                             await response.text()
                         ); 
                         break;
                 case 'iframe':
                 case 'document':
-                        if (isHtml(ultraviolet.meta.url, (responseCtx.headers['content-type'] || ''))) {
-                            responseCtx.body = ultraviolet.rewriteHtml(
+                        if (isHtml(Hurricane.meta.url, (responseCtx.headers['content-type'] || ''))) {
+                            responseCtx.body = Hurricane.rewriteHtml(
                                 await response.text(), 
                                 { 
                                     document: true ,
-                                    injectHead: ultraviolet.createHtmlInject(
+                                    injectHead: Hurricane.createHtmlInject(
                                         this.config.handler, 
                                         this.config.bundle, 
                                         this.config.config,
-                                        ultraviolet.cookie.serialize(cookies, ultraviolet.meta, true), 
+                                        Hurricane.cookie.serialize(cookies, Hurricane.meta, true), 
                                         request.referrer
                                     )
                                 }
@@ -211,7 +211,7 @@ class UVServiceWorker extends EventEmitter {
     get address() {
         return this.addresses[Math.floor(Math.random() * this.addresses.length)];
     };
-    static Ultraviolet = Ultraviolet;
+    static Hurricane = Hurricane;
 };
 
 self.UVServiceWorker = UVServiceWorker;
@@ -227,7 +227,7 @@ class ResponseContext {
         };
         this.request = request;
         this.raw = response;
-        this.ultraviolet = request.ultraviolet;
+        this.Hurricane = request.Hurricane;
         this.headers = headers;
         this.status = status;
         this.statusText = statusText;
@@ -245,8 +245,8 @@ class ResponseContext {
 };
 
 class RequestContext {
-    constructor(request, worker, ultraviolet, body = null) {
-        this.ultraviolet = ultraviolet;
+    constructor(request, worker, Hurricane, body = null) {
+        this.Hurricane = Hurricane;
         this.request = request;
         this.headers = Object.fromEntries([...request.headers.entries()]);
         this.method = request.method;
@@ -276,21 +276,21 @@ class RequestContext {
         });
     };
     get url() {
-        return this.ultraviolet.meta.url;
+        return this.Hurricane.meta.url;
     };
     set url(val) {
-        this.ultraviolet.meta.url = val;
+        this.Hurricane.meta.url = val;
     };
     get base() {
-        return this.ultraviolet.meta.base;
+        return this.Hurricane.meta.base;
     };
     set base(val) {
-        this.ultraviolet.meta.base = val;
+        this.Hurricane.meta.base = val;
     };
 }
 
 function isHtml(url, contentType = '') {
-    return (Ultraviolet.mime.contentType((contentType  || url.pathname)) || 'text/html').split(';')[0] === 'text/html';
+    return (Hurricane.mime.contentType((contentType  || url.pathname)) || 'text/html').split(';')[0] === 'text/html';
 };
 
 class HookEvent {

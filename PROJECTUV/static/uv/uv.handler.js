@@ -3,7 +3,7 @@ if (!self.__uv) {
 };
 
 async function __uvHook(window, config = {}, bare = '/bare/') {
-    if ('__uv' in window && window.__uv instanceof Ultraviolet) return false;
+    if ('__uv' in window && window.__uv instanceof Hurricane) return false;
 
     if (window.document && !!window.window) {
         window.document.querySelectorAll("script[__uv-script]").forEach(node => node.remove())
@@ -12,7 +12,7 @@ async function __uvHook(window, config = {}, bare = '/bare/') {
     const worker = !window.window;
     const master = '__uv';
     const methodPrefix = '__uv$';
-    const __uv = new Ultraviolet({
+    const __uv = new Hurricane({
         ...config,
         window,
     });
@@ -158,7 +158,7 @@ async function __uvHook(window, config = {}, bare = '/bare/') {
         methodPrefix + 'modifiedStyle',
         methodPrefix + 'config',
         methodPrefix + 'dispatched',
-        'Ultraviolet',
+        'Hurricane',
         '__uvHook',
     ];
 
